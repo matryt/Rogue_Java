@@ -18,10 +18,7 @@ public class Coord {
             return false;
         }
         Coord other = (Coord) c;
-        if (other.x == this.x && other.y == this.y) {
-            return true;
-        }
-        return false;
+        return other.x == this.x && other.y == this.y;
     }
 
     @Override
@@ -31,6 +28,10 @@ public class Coord {
 
     public Coord add(Coord other) {
         return new Coord(this.x+other.x, this.y+other.y);
+    }
+
+    public Coord subtract(Coord other) {
+        return new Coord(this.x-other.x, this.y-other.y);
     }
 
 }
