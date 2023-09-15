@@ -1,26 +1,27 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import static java.lang.System.out;
 
 public class Map {
-    static String ground = ".";
+    static Element ground = new Element("ground", ".");
     static HashMap<String, Coord> dir = new HashMap<>();
     int size;
     Coord pos;
-    String hero;
-    protected ArrayList<ArrayList<String>> mat = new ArrayList<>();
-    protected HashMap<String, Coord> elem = new HashMap<>();
+    Hero hero;
+    protected ArrayList<ArrayList<Element>> mat = new ArrayList<>();
+    protected HashMap<Element, Coord> elem = new HashMap<>();
 
-    Map(int size, Coord pos, String hero) {
+    Map(int size, Coord pos) {
         dir.put("z", new Coord(0, -1));
         dir.put("s", new Coord(0, 1));
         dir.put("d", new Coord(1, 0));
         dir.put("q", new Coord(-1, 0));
         this.size = size;
         this.pos = pos;
-        this.hero = hero;
-        ArrayList<String> insideMat = new ArrayList<>();
+        this.hero = new Hero();
+        ArrayList<Element> insideMat = new ArrayList<>();
         for (int i =0;i<size;i++) {
             for (int j =0;j<size;j++) {
                 insideMat.add(ground);
@@ -32,16 +33,12 @@ public class Map {
         elem.put(hero, pos);
     }
 
-    Map(int size, Coord pos) {
-        this(size, pos,"@");
-    }
-
     Map(int size) {
-        this(size, new Coord(1, 1), "@");
+        this(size, new Coord(1, 1));
     }
 
     Map() {
-        this(5, new Coord(1, 1), "@");
+        this(5, new Coord(1, 1));
     }
 
     @Override
@@ -66,21 +63,20 @@ public class Map {
 
             return 0 <= c.x && c.x < size && 0 <= c.y && c.y < size;
         }
-        if (o.getClass() == String.class) {
-            String s = (String) o;
-            return elem.containsKey(s);
+        if (o.getClass() == Element.class) {
+            return elem.containsKey(o);
         }
         return false;
     }
 
-    public String get(Coord c) {
+    public Element get(Coord c) throws NoSuchElementException{
         if (!contains(c)) {
-            return "";
+            throw new NoSuchElementException();
         }
         return mat.get(c.y).get(c.x);
     }
 
-    public Coord pos(String s) throws NonexistentError{
+    public Coord pos(Element s) throws NonexistentError{
         if (elem.containsKey(s)) {
             for (int i=0; i<size; i++) {
                 for (int j=0; j<size; j++) {
@@ -93,7 +89,7 @@ public class Map {
         throw new NonexistentError("L'élément demandé ne figure pas dans la carte !");
     }
 
-    public void put(Coord c, String e) throws IllegalArgumentException {
+    public void put(Coord c, Element e) throws IllegalArgumentException {
         if (contains(c)) {
             mat.get(c.y).set(c.x, e);
             elem.put(e, c);
@@ -105,7 +101,7 @@ public class Map {
 
     public void rm(Coord c) {
         if (contains(c)) {
-            String e = mat.get(c.y).get(c.x);
+            Element e = mat.get(c.y).get(c.x);
             mat.get(c.y).set(c.x, ground);
             elem.remove(e);
         }
@@ -114,17 +110,20 @@ public class Map {
         }
     }
 
-    public void move(String e, Coord way) throws NonexistentError {
+    public void move(Element e, Coord way) throws NonexistentError {
         Coord pos = pos(e);
         Coord arrive = pos.add(way);
-        String elemArrive = get(arrive);
-        if (contains(arrive) && elemArrive.equals(ground)) {
-            rm(pos);
-            put(arrive, e);
+        Element elemArrive = get(arrive);
+        if (contains(arrive)) {
+            if (elemArrive.equals(ground)) {
+                rm(pos);
+                put(arrive, e);
+            }
+            elemArrive.meet(hero);
         }
     }
 
-    public void play(Keyboard k, String hero) throws NonexistentError {
+    public void play(Keyboard k, Element hero) throws NonexistentError {
         while (true) {
             out.println(this);
             move(hero, dir.get(k.waitUntilPressed().toLowerCase()));
@@ -132,6 +131,6 @@ public class Map {
     }
 
     public void play(Keyboard k) throws NonexistentError {
-        play(k, "@");
+        play(k, new Hero());
     }
 }
